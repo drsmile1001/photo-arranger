@@ -8,30 +8,34 @@ if (!existsSync(sourceDir)) {
   console.error("Source directory does not exist");
   Deno.exit(1);
 }
-const rawDir = `${sourceDir}/raw`;
-if (!existsSync(rawDir)) {
-  Deno.mkdirSync(rawDir);
-}
-
-const jpgFiles: string[] = [];
 for await (const element of Deno.readDir(sourceDir)) {
-  if (!element.isFile) continue;
-  if (element.name.endsWith(".JPG")) {
-    jpgFiles.push(element.name);
+  if (!element.isDirectory) continue;
+  const childDir = `${sourceDir}/${element.name}`;
+  const rawDir = `${childDir}/raw`;
+  if (!existsSync(rawDir)) {
+    Deno.mkdirSync(rawDir);
   }
-  if (element.name.endsWith(".NEF")) {
-    await Deno.rename(
-      `${sourceDir}/${element.name}`,
-      `${rawDir}/${element.name}`,
-    );
-  }
-}
 
-for await (const rawFile of Deno.readDir(rawDir)) {
-  const nameWithoutExt = rawFile.name.split(".").slice(0, -1).join(".");
-  const jpgFile = jpgFiles.find((jpg) => jpg.startsWith(nameWithoutExt));
-  if (jpgFile) continue;
-  await Deno.remove(`${rawDir}\\${rawFile.name}`);
+  const jpgFiles: string[] = [];
+  for await (const element of Deno.readDir(childDir)) {
+    if (!element.isFile) continue;
+    if (element.name.endsWith(".JPG")) {
+      jpgFiles.push(element.name);
+    }
+    if (element.name.endsWith(".NEF")) {
+      await Deno.rename(
+        `${childDir}/${element.name}`,
+        `${rawDir}/${element.name}`,
+      );
+    }
+  }
+
+  for await (const rawFile of Deno.readDir(rawDir)) {
+    const nameWithoutExt = rawFile.name.split(".").slice(0, -1).join(".");
+    const jpgFile = jpgFiles.find((jpg) => jpg.startsWith(nameWithoutExt));
+    if (jpgFile) continue;
+    await Deno.remove(`${rawDir}\\${rawFile.name}`);
+  }
 }
 
 console.log("Done");
