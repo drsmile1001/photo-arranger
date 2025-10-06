@@ -1,0 +1,19 @@
+{
+  "name": "photo-arranger",
+  "version": "0.1.0",
+  "description": "Hello World Bun Template",
+  "scripts": {
+    "index": "bun run src/index.ts",
+    "format": "bunx prettier . --write"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.41",
+    "cac": "^6.7.14",
+    "kleur": "^4.1.5"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "bun-types": "^1.2.23",
+    "prettier": "^3.6.2"
+  }
+}
