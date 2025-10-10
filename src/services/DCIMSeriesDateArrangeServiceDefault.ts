@@ -13,7 +13,7 @@ import type {
 } from "./DCIMSeriesDateArrangeService";
 import type { ExifService } from "./ExifService";
 
-export type DCIMPhotoWithDate = DCIMPhoto & { captureDate: Date };
+export type DCIMPhotoWithDate = DCIMPhoto & { captureTime: Date };
 
 /**
  * 對單一 DCIM series 進行日期分組與 overflow 檢測。
@@ -74,19 +74,19 @@ export class DCIMSeriesDateArrangeServiceDefault
         });
         continue;
       }
-      if (!exif.value.captureDate || isNaN(exif.value.captureDate.getTime())) {
+      if (!exif.value.captureTime || isNaN(exif.value.captureTime.getTime())) {
         issues.push({
           originPath: photo.fullPath,
           type: "INVALID_TIME",
-          message: `無效的拍攝時間: ${exif.value.captureDate}`,
+          message: `無效的拍攝時間: ${exif.value.captureTime}`,
         });
         continue;
       }
-      valid.push({ ...photo, captureDate: exif.value.captureDate });
+      valid.push({ ...photo, captureTime: exif.value.captureTime });
     }
 
     const groupsByDate = valid.reduce((map, photo) => {
-      const date = format(photo.captureDate, "yyyyMMdd");
+      const date = format(photo.captureTime, "yyyyMMdd");
       if (!map.has(date)) map.set(date, []);
       map.get(date)!.push(photo);
       return map;
@@ -94,11 +94,12 @@ export class DCIMSeriesDateArrangeServiceDefault
 
     for (const [date, photos] of groupsByDate.entries()) {
       photos.sort((a, b) => {
-        if (!isEqual(a.captureDate, b.captureDate))
-          return a.captureDate.getTime() - b.captureDate.getTime();
+        if (!isEqual(a.captureTime, b.captureTime))
+          return a.captureTime.getTime() - b.captureTime.getTime();
         if (a.directorySerial !== b.directorySerial)
           return a.directorySerial - b.directorySerial;
-        return a.fileSerial - b.fileSerial;
+        if (a.fileSerial !== b.fileSerial) return a.fileSerial - b.fileSerial;
+        return a.extension.localeCompare(b.extension);
       });
 
       let lastPhoto: DCIMPhotoWithDate | null = null;
@@ -107,7 +108,7 @@ export class DCIMSeriesDateArrangeServiceDefault
       const photoWithOverflow = photos.map((photo) => {
         if (lastPhoto) {
           if (
-            (photo.captureDate !== lastPhoto.captureDate ||
+            (!isEqual(photo.captureTime, lastPhoto.captureTime) ||
               photo.directorySerial !== lastPhoto.directorySerial) &&
             photo.fileSerial <= lastPhoto.fileSerial
           ) {
@@ -148,7 +149,7 @@ export class DCIMSeriesDateArrangeServiceDefault
           originPath: photo.fullPath,
           targetPath,
           captureDate: date,
-          captureTime: photo.captureDate,
+          captureTime: photo.captureTime,
           photoSerial: photo.fileSerial,
           overflow: photo.overflow,
         });

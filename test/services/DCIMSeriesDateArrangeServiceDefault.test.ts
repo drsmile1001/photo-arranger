@@ -2,6 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { addSeconds, format } from "date-fns";
 import path from "node:path";
 
+import {
+  expectContainSubsets,
+  expectHasSubset,
+} from "~shared/testkit/ExpectSubset";
 import { buildTestLogger } from "~shared/testkit/TestLogger";
 
 import type { DCIMPhoto, DCIMSeries } from "@/services/DCIMGroupingService";
@@ -56,7 +60,7 @@ function buildContext() {
       } else if (p.exifDate instanceof Date) {
         exifService.setExif(fullPath, {
           filePath: fullPath,
-          captureDate: p.exifDate,
+          captureTime: p.exifDate,
         });
       }
       // 若未指定 exifDate，維持 FILE_NOT_FOUND 預設（不常用於本測試）
@@ -80,13 +84,13 @@ function buildContext() {
     };
   }
 
-  return { exifService, service, seedSeries };
+  return { exifService, service, seedSeries, logger };
 }
 
 // ---- 測試開始 ----
 describe("DCIMSeriesDateArrangeServiceDefault", () => {
   test("單一日期、無 overflow 正確產生排列與目標路徑", async () => {
-    const { seedSeries, service } = buildContext();
+    const { seedSeries, service, logger } = buildContext();
     const date = new Date("2024-08-17T12:00:00Z");
 
     const series = seedSeries({
@@ -95,19 +99,46 @@ describe("DCIMSeriesDateArrangeServiceDefault", () => {
       sourceRoot: "/",
       photos: [
         { dirSerial: 100, fileSerial: 1, ext: "JPG", exifDate: date },
-        { dirSerial: 100, fileSerial: 2, ext: "JPG", exifDate: date },
+        { dirSerial: 100, fileSerial: 1, ext: "NEF", exifDate: date },
+        {
+          dirSerial: 100,
+          fileSerial: 2,
+          ext: "JPG",
+          exifDate: addSeconds(date, 1),
+        },
+        {
+          dirSerial: 100,
+          fileSerial: 2,
+          ext: "NEF",
+          exifDate: addSeconds(date, 1),
+        },
       ],
     });
 
     const result = await service.arrange(series);
+    logger.debug({
+      arrangeResult: result,
+    })`arrange result`;
     expect(result.issues.length).toBe(0);
-    expect(result.arrangement.length).toBe(2);
-
-    const arr = result.arrangement[0];
-    expect(arr.captureDate).toBe(format(date, "yyyyMMdd"));
-    expect(arr.targetPath).toBe(
-      "/home/photos/pick/20240817-NIKON-DSC_/DSC_0001.JPG"
-    );
+    expectContainSubsets(result.arrangement, [
+      {
+        originPath: "/DCIM/100NIKON/DSC_0001.JPG",
+        targetPath: "/home/photos/pick/20240817-NIKON-DSC_/DSC_0001.JPG",
+      },
+      {
+        originPath: "/DCIM/100NIKON/DSC_0001.NEF",
+        targetPath: "/home/photos/pick/20240817-NIKON-DSC_/DSC_0001.NEF",
+      },
+      {
+        originPath: "/DCIM/100NIKON/DSC_0002.JPG",
+        targetPath: "/home/photos/pick/20240817-NIKON-DSC_/DSC_0002.JPG",
+      },
+      {
+        originPath: "/DCIM/100NIKON/DSC_0002.NEF",
+        targetPath: "/home/photos/pick/20240817-NIKON-DSC_/DSC_0002.NEF",
+      },
+    ]);
+    expect(result.arrangement.length).toBe(4);
   });
 
   test("跨 9999 overflow 應標記 overflow=1 並修正檔名", async () => {

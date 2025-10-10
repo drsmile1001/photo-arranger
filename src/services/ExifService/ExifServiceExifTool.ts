@@ -22,7 +22,7 @@ export class ExifServiceExifTool implements ExifService {
 
       const exif: Exif = {
         filePath,
-        captureDate: capture,
+        captureTime: capture,
         cameraModel: tags.Model as string | undefined,
         lensModel: tags.LensModel as string | undefined,
         exposureTime: tags.ExposureTime as string | undefined,

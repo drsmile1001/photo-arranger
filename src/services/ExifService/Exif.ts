@@ -3,7 +3,7 @@ export type Exif = {
   filePath: string;
 
   /** 拍攝時間 */
-  captureDate?: Date;
+  captureTime?: Date;
 
   /** 相機型號 */
   cameraModel?: string;

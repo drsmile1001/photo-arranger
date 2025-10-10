@@ -9,14 +9,14 @@ export interface ArrangeResult {
   issues: ArrangeIssue[];
 }
 
-export interface Arrangement {
+export type Arrangement = {
   originPath: string;
   targetPath: string;
   captureTime: Date;
   captureDate: string; // yyyyMMdd
   photoSerial: number;
   overflow: number; // 0 表示無溢出, >0 表示第幾輪
-}
+};
 
 export interface ArrangeIssue {
   originPath: string;

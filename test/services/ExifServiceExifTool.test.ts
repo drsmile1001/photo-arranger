@@ -12,7 +12,7 @@ describe("ExifServiceExifTool", () => {
     expectOk(jpgResult);
     expectHasSubset(jpgResult.value, {
       filePath: "test/fixture/DRS_0596.JPG",
-      captureDate: new Date("2024-08-17T11:26:57.000Z"),
+      captureTime: new Date("2024-08-17T11:26:57.000Z"),
       cameraModel: "NIKON Z6_3",
       lensModel: "NIKKOR Z 24-120mm f/4 S",
       exposureTime: "1/100",
@@ -23,7 +23,7 @@ describe("ExifServiceExifTool", () => {
     expectOk(nefResult);
     expectHasSubset(nefResult.value, {
       filePath: "test/fixture/DRS_0596.NEF",
-      captureDate: new Date("2024-08-17T11:26:57.000Z"),
+      captureTime: new Date("2024-08-17T11:26:57.000Z"),
       cameraModel: "NIKON Z6_3",
       lensModel: "NIKKOR Z 24-120mm f/4 S",
       exposureTime: "1/100",

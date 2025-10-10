@@ -1,4 +1,5 @@
 import type { CAC } from "cac";
+import { format } from "date-fns";
 import { mkdir, rename, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -10,6 +11,7 @@ import type { Logger } from "~shared/Logger";
 import { isErr } from "~shared/utils/Result";
 
 import { DCIMGroupingServiceDefault } from "@/services/DCIMGroupingServiceDefault";
+import type { Arrangement } from "@/services/DCIMSeriesDateArrangeService";
 import { DCIMSeriesDateArrangeServiceDefault } from "@/services/DCIMSeriesDateArrangeServiceDefault";
 import { ExifServiceExifTool } from "@/services/ExifService";
 import { FileSystemScannerDefault } from "@/services/FileSystemScanner/FileSystemScannerDefault";
@@ -135,13 +137,7 @@ export function registerArrange(cli: CAC, baseLogger: Logger) {
       }
 
       // 4) 產生搬移計劃報告
-      const plan = summarizePlan(allArrangements);
-      await reporter.dump("arrange-plan", plan);
-      logger.info({
-        emoji: "📝",
-        files: allArrangements.length,
-        dirs: Object.keys(plan.byDir).length,
-      })`搬移計劃已輸出`;
+      await reportPlan(reporter, allArrangements);
 
       // 5) 確認 / 執行
       const proceed =
@@ -158,25 +154,35 @@ export function registerArrange(cli: CAC, baseLogger: Logger) {
       }
 
       // 6) 實際搬移
+      logger.info("開始搬移...");
       let moved = 0;
       for (const item of allArrangements) {
         await mkdir(path.dirname(item.targetPath), { recursive: true });
         // 安全防呆：不覆蓋既有檔案
         if (await exists(item.targetPath)) {
           logger.error({
+            event: "target-exists",
             emoji: "🧨",
             origin: item.originPath,
             target: item.targetPath,
-          })`目標已存在，停止（避免覆蓋）`;
+          })`目標 ${item.targetPath} 已存在，停止（避免覆蓋）`;
           process.exit(1);
         }
         await rename(item.originPath, item.targetPath);
         moved++;
+        logger.info({
+          event: "moved",
+          emoji: "📦",
+          count: moved,
+          from: item.originPath,
+          to: item.targetPath,
+        })`${item.originPath} → ${item.targetPath} 搬移完成 (${moved}/${allArrangements.length})`;
       }
       logger.info({
+        event: "done",
         emoji: "✅",
         moved,
-      })`搬移完成`;
+      })`全部搬移完成，共搬移 ${moved} 個檔案`;
     });
 }
 
@@ -202,27 +208,51 @@ async function exists(p: string) {
   }
 }
 
-function summarizePlan(
-  arrangement: Array<{
-    originPath: string;
-    targetPath: string;
-    captureDate: string;
-    overflow: number;
-  }>
+async function reportPlan(
+  dumper: DumpWriterDefault,
+  arrangements: Arrangement[]
 ) {
-  const byDir: Record<string, number> = {};
-  for (const a of arrangement) {
-    const dir = path.dirname(a.targetPath);
-    byDir[dir] = (byDir[dir] ?? 0) + 1;
-  }
-  return {
-    total: arrangement.length,
-    byDir,
-    sample: arrangement.slice(0, 10).map((a) => ({
+  const byDir = arrangements.reduce((acc, cur) => {
+    const dir = path.basename(path.dirname(cur.targetPath));
+    const list = acc.get(dir) ?? [];
+    list.push(cur);
+    acc.set(dir, list);
+    return acc;
+  }, new Map<string, Arrangement[]>());
+  const total = arrangements.length;
+
+  const summary = {
+    total,
+    dirCount: byDir.size,
+    dirs: byDir.entries().reduce(
+      (obj, [dir, arr]) => {
+        obj[dir] = {
+          count: arr.length,
+          maxOverflow: Math.max(...arr.map((a) => a.overflow)),
+          first: arr[0].targetPath,
+          last: arr[arr.length - 1].targetPath,
+        };
+        return obj;
+      },
+      {} as Record<
+        string,
+        { count: number; maxOverflow: number; first: string; last: string }
+      >
+    ),
+  };
+
+  await dumper.dump("搬移計劃摘要", summary);
+
+  for (const [dir, arrangements] of byDir.entries()) {
+    const arrangeSummary = arrangements.map((a) => ({
       from: a.originPath,
       to: a.targetPath,
-      date: a.captureDate,
-      overflow: a.overflow,
-    })),
-  };
+      time: format(a.captureTime, "HH:mm:ss"),
+    }));
+    await dumper.dump(`搬移目標目錄-${dir}`, {
+      maxOverflow: Math.max(...arrangements.map((a) => a.overflow)),
+      total: arrangements.length,
+      photos: arrangeSummary,
+    });
+  }
 }

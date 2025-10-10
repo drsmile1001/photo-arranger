@@ -16,7 +16,7 @@ export class FileSystemScannerDefault implements FileSystemScanner {
       });
       const fullPaths = files
         .filter((d) => d.isFile())
-        .map((d) => `${rootPath}/${d.name}`);
+        .map((d) => `${d.parentPath}/${d.name}`);
       return ok(fullPaths);
     } catch (e) {
       return err({
