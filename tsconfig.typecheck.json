@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["shared"],
+  "exclude": ["deps"],
   "compilerOptions": {
     "noEmit": true
   }

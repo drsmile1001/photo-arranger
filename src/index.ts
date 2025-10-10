@@ -4,12 +4,14 @@ import { createDefaultLoggerFromEnv } from "~shared/Logger";
 
 import { registerArrange } from "./app/Arrange";
 import { registerPhotoImport } from "./app/PhotoImport";
+import { registerReadExifBench } from "./app/ReadExifBench";
 
 const logger = createDefaultLoggerFromEnv();
 const cli = cac();
 
 registerPhotoImport(cli, logger);
 registerArrange(cli, logger);
+registerReadExifBench(cli, logger);
 
 cli.help();
 cli.parse(process.argv, { run: false });

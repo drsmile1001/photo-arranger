@@ -1,5 +1,4 @@
 import { ExifDateTime, exiftool } from "exiftool-vendored";
-import { stat } from "node:fs/promises";
 
 import { type Result, err, ok } from "~shared/utils/Result";
 
@@ -8,16 +7,6 @@ import type { ExifService } from "./ExifService";
 
 export class ExifServiceExifTool implements ExifService {
   async readExif(filePath: string): Promise<Result<Exif, ReadError>> {
-    try {
-      // 檢查檔案是否存在
-      await stat(filePath);
-    } catch {
-      return err({
-        type: "FILE_NOT_FOUND",
-        message: `找不到檔案: ${filePath}`,
-      });
-    }
-
     try {
       const tags = await exiftool.read(filePath);
       if (!tags) {

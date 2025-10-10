@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { addSeconds, format } from "date-fns";
 import path from "node:path";
 
+import { buildTestLogger } from "~shared/testkit/TestLogger";
+
 import type { DCIMPhoto, DCIMSeries } from "@/services/DCIMGroupingService";
 import { DCIMSeriesDateArrangeServiceDefault } from "@/services/DCIMSeriesDateArrangeServiceDefault";
 
@@ -9,11 +11,13 @@ import { ExifServiceFake } from "~test/fakes/ExifServiceFake";
 
 // ---- 測試共同工具 ----
 function buildContext() {
+  const logger = buildTestLogger();
   const exifService = new ExifServiceFake();
 
   const service = new DCIMSeriesDateArrangeServiceDefault({
     exifService,
     outputRoot: "/home/photos/pick",
+    logger,
   });
 
   function seedSeries(config: {

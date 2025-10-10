@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "bun:test";
 
-import { expectError, expectOk } from "~shared/testkit/ExpectResult";
+import { expectOk } from "~shared/testkit/ExpectResult";
 import { expectHasSubset } from "~shared/testkit/ExpectSubset";
 
 import { ExifServiceExifTool } from "@/services/ExifService";
@@ -30,12 +30,5 @@ describe("ExifServiceExifTool", () => {
       aperture: 5,
       iso: 5600,
     });
-  });
-
-  test("檔案不存在時回傳錯誤", async () => {
-    const service = new ExifServiceExifTool();
-    const result = await service.readExif("no_such_file.jpg");
-    expectError(result);
-    expect(result.error.type === "FILE_NOT_FOUND").toBeTrue();
   });
 });

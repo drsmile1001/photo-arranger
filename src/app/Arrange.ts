@@ -19,6 +19,19 @@ type ArrangeOptions = {
   yes?: boolean;
 };
 
+const photoExtensions = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".heic",
+  ".tiff",
+  ".cr2",
+  ".nef",
+  ".arw",
+  ".orf",
+  ".rw2",
+]);
+
 export function registerArrange(cli: CAC, baseLogger: Logger) {
   cli
     .command("arrange <folder>", "整理 DCIM 目錄，並以時間系列分資料夾")
@@ -44,17 +57,20 @@ export function registerArrange(cli: CAC, baseLogger: Logger) {
         process.exit(1);
       }
       const filePaths = scanRes.value;
-      if (filePaths.length === 0) {
-        logger.warn("來源目錄沒有可處理檔案");
+      const photoPaths = filePaths.filter((p) =>
+        photoExtensions.has(path.extname(p).toLowerCase())
+      );
+      if (photoPaths.length === 0) {
+        logger.warn("來源目錄沒有可處理的相片檔案");
         return;
       }
       logger.info({
         emoji: "🔎",
-        count: filePaths.length,
-      })`掃描完成，共 ${filePaths.length} 個檔案`;
+        count: photoPaths.length,
+      })`掃描完成，共 ${filePaths.length} 個檔案，其中 ${photoPaths.length} 個為相片`;
 
       // 2) 分系列（依 DCF 結構）
-      const grouping = new DCIMGroupingServiceDefault().group(filePaths);
+      const grouping = new DCIMGroupingServiceDefault().group(photoPaths);
       if (grouping.issues.length > 0) {
         await reporter.dump("grouping-issues", grouping);
         logger.error({
@@ -78,9 +94,15 @@ export function registerArrange(cli: CAC, baseLogger: Logger) {
       const arranger = new DCIMSeriesDateArrangeServiceDefault({
         exifService,
         outputRoot: targetRoot,
+        logger,
       });
       const allArrangements = [];
+      let seriesIndex = 0;
       for (const series of grouping.seriesList) {
+        seriesIndex++;
+        logger.info({
+          emoji: "⏳",
+        })`處理${series.directorySuffix}-${series.photoPrefix}系列中... ${seriesIndex}/${grouping.seriesList.length}`;
         const result = await arranger.arrange(series);
         if (result.issues.length > 0) {
           await reporter.dump("arrange-issues", {
@@ -99,6 +121,11 @@ export function registerArrange(cli: CAC, baseLogger: Logger) {
         }
         allArrangements.push(...result.arrangement);
       }
+
+      logger.info({
+        emoji: "✅",
+        count: allArrangements.length,
+      })`搬移計劃產生完成`;
 
       if (allArrangements.length === 0) {
         logger.warn({

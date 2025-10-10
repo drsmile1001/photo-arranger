@@ -1,6 +1,7 @@
 import { format, isEqual } from "date-fns";
 import path from "node:path";
 
+import type { Logger } from "~shared/Logger";
 import { isErr } from "~shared/utils/Result";
 
 import type { DCIMPhoto, DCIMSeries } from "./DCIMGroupingService";
@@ -27,19 +28,38 @@ export class DCIMSeriesDateArrangeServiceDefault
 {
   private readonly exifService: ExifService;
   private readonly outputRoot: string;
+  private readonly logger: Logger;
 
-  constructor(deps: { exifService: ExifService; outputRoot: string }) {
+  constructor(deps: {
+    exifService: ExifService;
+    outputRoot: string;
+    logger: Logger;
+  }) {
     this.exifService = deps.exifService;
     this.outputRoot = deps.outputRoot;
+    this.logger = deps.logger.extend("DCIMSeriesDateArrangeServiceDefault");
   }
 
   async arrange(series: DCIMSeries): Promise<ArrangeResult> {
+    const logger = this.logger.extend("arrange", {
+      series: `${series.directorySuffix}-${series.photoPrefix}`,
+    });
+    logger.info({
+      emoji: "🔄",
+    })`開始處理系列 ${series.directorySuffix}-${series.photoPrefix}，共 ${series.photos.length} 張相片`;
     const arrangements: Arrangement[] = [];
     const issues: ArrangeIssue[] = [];
+    let readExifCount = 0;
+    const totalPhotos = series.photos.length;
 
     const exifResults = await Promise.all(
       series.photos.map(async (photo) => {
         const exif = await this.exifService.readExif(photo.fullPath);
+        readExifCount++;
+        this.logger.info({
+          emoji: "📷",
+          count: readExifCount,
+        })`已讀取 ${readExifCount}/${totalPhotos} 張相片的 EXIF 資訊...`;
         return { photo, exif };
       })
     );
