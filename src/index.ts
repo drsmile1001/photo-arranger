@@ -2,12 +2,14 @@ import { cac } from "cac";
 
 import { createDefaultLoggerFromEnv } from "~shared/Logger";
 
-import { registerGreeting } from "./app/Greeting";
+import { registerArrange } from "./app/Arrange";
+import { registerPhotoImport } from "./app/PhotoImport";
 
 const logger = createDefaultLoggerFromEnv();
 const cli = cac();
 
-registerGreeting(cli, logger);
+registerPhotoImport(cli, logger);
+registerArrange(cli, logger);
 
 cli.help();
 cli.parse(process.argv, { run: false });

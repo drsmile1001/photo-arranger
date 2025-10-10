@@ -6,7 +6,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "~test/*": ["./test/*"],
-      "~shared/*": ["./shared/src/*"]
+      "~shared/*": ["./deps/shared/src/*"]
     },
     "types": ["bun-types"],
     "verbatimModuleSyntax": true,

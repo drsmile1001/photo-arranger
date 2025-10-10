@@ -4,16 +4,22 @@
   "description": "Hello World Bun Template",
   "scripts": {
     "index": "bun run src/index.ts",
-    "format": "bunx prettier . --write"
+    "format": "bunx prettier . --write",
+    "type-check": "bun run tsc --project tsconfig.typecheck.json",
+    "shared:pull": "bun run tools/index.ts subtree:pull shared git@github.com:drsmile1001/bun-shared.git"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.41",
     "cac": "^6.7.14",
-    "kleur": "^4.1.5"
+    "date-fns": "^4.1.0",
+    "exiftool-vendored": "^31.1.0",
+    "kleur": "^4.1.5",
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "bun-types": "^1.2.23",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
   }
 }
