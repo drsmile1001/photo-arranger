@@ -1,8 +1,10 @@
+import { parse } from "date-fns";
 import { ExifDateTime, exiftool } from "exiftool-vendored";
 
 import { type Result, err, ok } from "~shared/utils/Result";
 
 import type { Exif, ReadError } from "./Exif";
+import { getTime } from "./ExifDateTimeHelper";
 import type { ExifService } from "./ExifService";
 
 export class ExifServiceExifTool implements ExifService {
@@ -16,13 +18,9 @@ export class ExifServiceExifTool implements ExifService {
         });
       }
 
-      const capture =
-        (tags.CreateDate as ExifDateTime | undefined)?.toDate?.() ??
-        (tags.DateTimeOriginal as ExifDateTime | undefined)?.toDate?.();
-
       const exif: Exif = {
         filePath,
-        captureTime: capture,
+        captureTime: getTime(tags.DateTimeOriginal as ExifDateTime | undefined),
         cameraModel: tags.Model as string | undefined,
         lensModel: tags.LensModel as string | undefined,
         exposureTime: tags.ExposureTime as string | undefined,
@@ -38,5 +36,9 @@ export class ExifServiceExifTool implements ExifService {
         message: `讀取 EXIF 失敗: ${filePath}`,
       });
     }
+  }
+
+  async [Symbol.asyncDispose]() {
+    await exiftool.end();
   }
 }

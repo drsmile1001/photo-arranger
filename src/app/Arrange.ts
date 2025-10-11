@@ -92,7 +92,7 @@ export function registerArrange(cli: CAC, baseLogger: Logger) {
       })`分系列完成`;
 
       // 3) 逐系列產生搬移計劃（含 EXIF 讀取、overflow 判定）
-      const exifService = new ExifServiceExifTool();
+      await using exifService = new ExifServiceExifTool();
       const arranger = new DCIMSeriesDateArrangeServiceDefault({
         exifService,
         outputRoot: targetRoot,

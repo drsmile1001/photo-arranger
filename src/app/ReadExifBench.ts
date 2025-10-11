@@ -7,6 +7,7 @@ import { performance } from "node:perf_hooks";
 import type { Logger } from "~shared/Logger";
 import { isErr } from "~shared/utils/Result";
 
+import { photoExtensions } from "@/constants";
 import { FileSystemScannerDefault } from "@/services/FileSystemScanner/FileSystemScannerDefault";
 
 type Strategy = "sequential" | "pool" | "chunked" | "all";
@@ -20,18 +21,6 @@ type BenchOptions = {
   noWarmup?: boolean;
   exts?: string; // "jpg,jpeg,nef,arw,cr2,cr3,dng,heic,heif"
 };
-
-const DEFAULT_EXTS = new Set([
-  ".jpg",
-  ".jpeg",
-  ".nef",
-  ".arw",
-  ".cr2",
-  ".cr3",
-  ".dng",
-  ".heic",
-  ".heif",
-]);
 
 export function registerReadExifBench(cli: CAC, baseLogger: Logger) {
   cli
@@ -66,31 +55,28 @@ export function registerReadExifBench(cli: CAC, baseLogger: Logger) {
         .filter(Boolean) as Strategy[];
       const exts =
         options.exts?.split(",").map((s) => "." + s.trim().toLowerCase()) ??
-        Array.from(DEFAULT_EXTS);
+        photoExtensions;
 
       // 1) 掃描檔案
       const scanner = new FileSystemScannerDefault();
-      const scanRes = await scanner.scan(root);
-      if (isErr(scanRes)) {
-        logger.error({ emoji: "❌", error: scanRes.error })`掃描來源目錄失敗`;
+      const scanResult = await scanner.scan(root, exts);
+      if (isErr(scanResult)) {
+        logger.error({
+          emoji: "❌",
+          error: scanResult.error,
+        })`掃描來源目錄失敗`;
         process.exit(1);
       }
-      const allPaths = scanRes.value;
-      const photoPaths = allPaths.filter((p) =>
-        exts.includes(path.extname(p).toLowerCase())
-      );
-      if (photoPaths.length === 0) {
+      const allPaths = scanResult.value;
+      if (allPaths.length === 0) {
         logger.warn("來源目錄沒有可處理的相片檔案");
         return;
       }
-      const files = limit ? photoPaths.slice(0, limit) : photoPaths;
+      const files = limit ? allPaths.slice(0, limit) : allPaths;
 
       logger.info({
         emoji: "🔎",
-        scanned: allPaths.length,
-        photos: photoPaths.length,
-        used: files.length,
-      })`掃描完成：共 ${allPaths.length} 檔，照片 ${photoPaths.length}，參與測試 ${files.length}`;
+      })`掃描完成：共有照片 ${allPaths.length}，參與測試 ${files}`;
 
       // 2) 顯示測試設定
       logger.info({
