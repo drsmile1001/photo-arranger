@@ -2,7 +2,8 @@ import { cac } from "cac";
 
 import { createDefaultLoggerFromEnv } from "~shared/Logger";
 
-import { registerArrange } from "./app/Arrange";
+import { registerArrangeDCIM } from "./app/ArrangeDCIM";
+import { registerArrangeRaw } from "./app/ArrangeRaw";
 import { registerPhotoImport } from "./app/PhotoImport";
 import { registerReadExifBench } from "./app/ReadExifBench";
 
@@ -10,7 +11,8 @@ const logger = createDefaultLoggerFromEnv();
 const cli = cac();
 
 registerPhotoImport(cli, logger);
-registerArrange(cli, logger);
+registerArrangeDCIM(cli, logger);
+registerArrangeRaw(cli, logger);
 registerReadExifBench(cli, logger);
 
 cli.help();

@@ -1,10 +1,7 @@
 import type { CAC } from "cac";
 import { format } from "date-fns";
-import { mkdir, rename, stat } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, rename } from "node:fs/promises";
 import path from "node:path";
-import { stdin as input, stdout as output } from "node:process";
-import { createInterface } from "node:readline/promises";
 
 import { DumpWriterDefault } from "~shared/DumpWriter/DumpWriterDefault";
 import type { Logger } from "~shared/Logger";
@@ -15,6 +12,7 @@ import type { Arrangement } from "@/services/DCIMSeriesDateArrangeService";
 import { DCIMSeriesDateArrangeServiceDefault } from "@/services/DCIMSeriesDateArrangeServiceDefault";
 import { ExifServiceExifTool } from "@/services/ExifService";
 import { FileSystemScannerDefault } from "@/services/FileSystemScanner/FileSystemScannerDefault";
+import { confirm, exists, expandHome } from "@/utils/helper";
 
 type ArrangeOptions = {
   target?: string;
@@ -34,9 +32,9 @@ const photoExtensions = new Set([
   ".rw2",
 ]);
 
-export function registerArrange(cli: CAC, baseLogger: Logger) {
+export function registerArrangeDCIM(cli: CAC, baseLogger: Logger) {
   cli
-    .command("arrange <folder>", "整理 DCIM 目錄，並以時間系列分資料夾")
+    .command("arrange-dcim <folder>", "整理 DCIM 目錄，並以時間系列分資料夾")
     .option("--target <path>", "指定目標目錄，預設 ~/pictures/photos/pick")
     .option("--yes", "略過確認，直接執行搬移", { default: false })
     .action(async (folder: string, options: ArrangeOptions) => {
@@ -184,28 +182,6 @@ export function registerArrange(cli: CAC, baseLogger: Logger) {
         moved,
       })`全部搬移完成，共搬移 ${moved} 個檔案`;
     });
-}
-
-// helpers
-function expandHome(p: string) {
-  if (p.startsWith("~/")) return path.join(os.homedir(), p.slice(2));
-  return p;
-}
-
-async function confirm(logger: Logger, question: string) {
-  const rl = createInterface({ input, output });
-  const ans = (await rl.question(question)).trim().toLowerCase();
-  rl.close();
-  return ans === "y" || ans === "yes";
-}
-
-async function exists(p: string) {
-  try {
-    await stat(p);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function reportPlan(

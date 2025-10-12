@@ -9,9 +9,10 @@ export const rawExtensions = [
   ".raf",
 ] as const;
 
+export const jpgExtensions = [".jpg", ".jpeg"] as const;
+
 export const photoExtensions = [
-  ".jpg",
-  ".jpeg",
+  ...jpgExtensions,
   ".heic",
   ".heif",
   ...rawExtensions,
