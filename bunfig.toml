@@ -1,0 +1,5 @@
+[test]
+root = "test"
+
+[console]
+depth = 10
