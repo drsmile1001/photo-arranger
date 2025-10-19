@@ -1,4 +1,3 @@
-import { parse } from "date-fns";
 import { ExifDateTime, exiftool } from "exiftool-vendored";
 
 import { type Result, err, ok } from "~shared/utils/Result";
@@ -26,6 +25,7 @@ export class ExifServiceExifTool implements ExifService {
         exposureTime: tags.ExposureTime as string | undefined,
         aperture: tags.FNumber as number | undefined,
         iso: tags.ISO as number | undefined,
+        rating: tags.Rating as number | undefined,
         raw: tags as Record<string, unknown>,
       };
 
@@ -35,6 +35,25 @@ export class ExifServiceExifTool implements ExifService {
         type: "READ_FAILED",
         message: `讀取 EXIF 失敗: ${filePath}`,
       });
+    }
+  }
+
+  async writeRating(
+    filePath: string,
+    rating: number
+  ): Promise<Result<void, Error>> {
+    try {
+      await exiftool.write(
+        filePath,
+        { Rating: rating },
+        {
+          writeArgs: ["-overwrite_original"],
+        }
+      );
+
+      return ok();
+    } catch (error) {
+      return err(error as Error);
     }
   }
 

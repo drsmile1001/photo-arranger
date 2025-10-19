@@ -7,6 +7,7 @@ import { registerArrangeRaw } from "./app/ArrangeRaw";
 import { registerPhotoImport } from "./app/PhotoImport";
 import { registerReadExifBench } from "./app/ReadExifBench";
 import { registerRejectLowStar } from "./app/RejectLowStar";
+import { registerWriteStar } from "./app/WriteStar";
 
 const logger = createDefaultLoggerFromEnv();
 const cli = cac();
@@ -16,6 +17,7 @@ registerArrangeDCIM(cli, logger);
 registerArrangeRaw(cli, logger);
 registerReadExifBench(cli, logger);
 registerRejectLowStar(cli, logger);
+registerWriteStar(cli, logger);
 
 cli.help();
 cli.parse(process.argv, { run: false });

@@ -20,6 +20,9 @@ export type Exif = {
   /** ISO */
   iso?: number;
 
+  /** 星等評分，通常為 0-5 */
+  rating?: number;
+
   /** 其他可能用於後續邏輯的欄位 */
   raw?: Record<string, unknown>;
 };
