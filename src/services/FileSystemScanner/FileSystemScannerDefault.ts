@@ -8,8 +8,10 @@ import { type FileSystemScanner, type ScanError } from "./FileSystemScanner";
 export class FileSystemScannerDefault implements FileSystemScanner {
   async scan(
     rootPath: string,
-    allowExts: readonly string[] = []
+    options?: { recursive?: boolean; allowExts?: readonly string[] }
   ): Promise<Result<string[], ScanError>> {
+    const allowExts = options?.allowExts ?? [];
+    const isRecursive = options?.recursive ?? true;
     const lowerExts = allowExts.map((e) => {
       if (e.startsWith(".")) return e.toLowerCase();
       return `.${e.toLowerCase()}`;
@@ -17,7 +19,7 @@ export class FileSystemScannerDefault implements FileSystemScanner {
     const allowExtsSet = new Set(lowerExts);
     try {
       const files = await readdir(rootPath, {
-        recursive: true,
+        recursive: isRecursive,
         withFileTypes: true,
       });
       const fullPaths = files

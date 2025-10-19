@@ -59,7 +59,9 @@ export function registerReadExifBench(cli: CAC, baseLogger: Logger) {
 
       // 1) 掃描檔案
       const scanner = new FileSystemScannerDefault();
-      const scanResult = await scanner.scan(root, exts);
+      const scanResult = await scanner.scan(root, {
+        allowExts: exts,
+      });
       if (isErr(scanResult)) {
         logger.error({
           emoji: "❌",

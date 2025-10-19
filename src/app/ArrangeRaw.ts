@@ -1,9 +1,6 @@
 import type { CAC } from "cac";
-import { mkdir, rename, stat, unlink } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, rename, unlink } from "node:fs/promises";
 import path from "node:path";
-import { stdin as input, stdout as output } from "node:process";
-import { createInterface } from "node:readline/promises";
 
 import { DumpWriterDefault } from "~shared/DumpWriter/DumpWriterDefault";
 import type { Logger } from "~shared/Logger";
@@ -32,7 +29,9 @@ export function registerArrangeRaw(cli: CAC, baseLogger: Logger) {
 
       // 掃描
       const scanner = new FileSystemScannerDefault();
-      const scanRes = await scanner.scan(root, photoExtensions);
+      const scanRes = await scanner.scan(root, {
+        allowExts: photoExtensions,
+      });
       if (isErr(scanRes)) {
         logger.error({ emoji: "❌", error: scanRes.error })`掃描來源目錄失敗`;
         process.exit(1);

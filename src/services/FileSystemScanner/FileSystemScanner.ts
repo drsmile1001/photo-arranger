@@ -8,6 +8,6 @@ export type ScanError = {
 export interface FileSystemScanner {
   scan(
     rootPath: string,
-    allowExts?: string[]
+    options?: { recursive?: boolean; allowExts?: readonly string[] }
   ): Promise<Result<string[], ScanError>>;
 }
